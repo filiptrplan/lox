@@ -93,6 +93,14 @@ public class Scanner {
                 // case will then handle the increment of the line counter.
                 if (match('/')) {
                     while (peek() != '\n' && !isAtEnd()) advance();
+                } else if (match('*')) {
+                    while (peek() != '*' && peekNext() != '/' && !isAtEnd()) {
+                        if(source.charAt(current) == '\n') line++;
+                        advance();
+                    }
+                    if (current + 1 < source.length()) {
+                        advance(); advance(); 
+                    }
                 } else {
                     addToken(SLASH);
                 }

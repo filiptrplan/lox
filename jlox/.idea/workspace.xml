@@ -4,8 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b1291911-9944-42e0-aeda-8d08c7fb9f69" name="Changes" comment="Chapter 4 - Scanning">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    <list default="true" id="b1291911-9944-42e0-aeda-8d08c7fb9f69" name="Changes" comment="add configuration">
+      <change afterPath="$PROJECT_DIR$/src/si/trplan/lox/test.lox" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/si/trplan/lox/Scanner.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/si/trplan/lox/Scanner.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -40,7 +41,7 @@
     "Application.JLox REPL.executor": "Run",
     "Application.Lox.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "master",
+    "git-widget-placeholder": "challenges-04",
     "kotlin-language-version-configured": "true",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
@@ -54,7 +55,7 @@
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Application.JLox Test">
     <configuration name="JLox REPL" type="Application" factoryName="Application">
       <option name="MAIN_CLASS_NAME" value="si.trplan.lox.Lox" />
       <module name="jlox" />
@@ -62,6 +63,18 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <configuration name="JLox Test" type="Application" factoryName="Application">
+      <option name="MAIN_CLASS_NAME" value="si.trplan.lox.Lox" />
+      <module name="jlox" />
+      <option name="PROGRAM_PARAMETERS" value="test.lox" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <list>
+      <item itemvalue="Application.JLox REPL" />
+      <item itemvalue="Application.JLox Test" />
+    </list>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
@@ -81,7 +94,7 @@
       <updated>1716063153329</updated>
       <workItem from="1716063154121" duration="220000" />
       <workItem from="1716063387115" duration="15000" />
-      <workItem from="1716063416360" duration="8441000" />
+      <workItem from="1716063416360" duration="8736000" />
     </task>
     <task id="LOCAL-00001" summary="init with intellij build system">
       <option name="closed" value="true" />
@@ -107,7 +120,15 @@
       <option name="project" value="LOCAL" />
       <updated>1716114027092</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="add configuration">
+      <option name="closed" value="true" />
+      <created>1716146408857</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1716146408857</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -117,7 +138,8 @@
     <MESSAGE value="init with intellij build system" />
     <MESSAGE value="idea files" />
     <MESSAGE value="Chapter 4 - Scanning" />
-    <option name="LAST_COMMIT_MESSAGE" value="Chapter 4 - Scanning" />
+    <MESSAGE value="add configuration" />
+    <option name="LAST_COMMIT_MESSAGE" value="add configuration" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
