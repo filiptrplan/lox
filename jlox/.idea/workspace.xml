@@ -4,13 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b1291911-9944-42e0-aeda-8d08c7fb9f69" name="Changes" comment="init with intellij build system">
-      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/si/trplan/lox/Scanner.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/si/trplan/lox/Token.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/si/trplan/lox/TokenType.java" afterDir="false" />
+    <list default="true" id="b1291911-9944-42e0-aeda-8d08c7fb9f69" name="Changes" comment="Chapter 4 - Scanning">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Lox.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/si/trplan/lox/Lox.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -42,6 +37,7 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "Application.JLox REPL.executor": "Run",
     "Application.Lox.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "git-widget-placeholder": "master",
@@ -85,7 +81,7 @@
       <updated>1716063153329</updated>
       <workItem from="1716063154121" duration="220000" />
       <workItem from="1716063387115" duration="15000" />
-      <workItem from="1716063416360" duration="4822000" />
+      <workItem from="1716063416360" duration="8441000" />
     </task>
     <task id="LOCAL-00001" summary="init with intellij build system">
       <option name="closed" value="true" />
@@ -95,7 +91,23 @@
       <option name="project" value="LOCAL" />
       <updated>1716063181541</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="idea files">
+      <option name="closed" value="true" />
+      <created>1716113995889</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1716113995889</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Chapter 4 - Scanning">
+      <option name="closed" value="true" />
+      <created>1716114027092</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1716114027092</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -103,7 +115,9 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="init with intellij build system" />
-    <option name="LAST_COMMIT_MESSAGE" value="init with intellij build system" />
+    <MESSAGE value="idea files" />
+    <MESSAGE value="Chapter 4 - Scanning" />
+    <option name="LAST_COMMIT_MESSAGE" value="Chapter 4 - Scanning" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
