@@ -1,18 +1,31 @@
 package si.trplan.lox;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static si.trplan.lox.TokenType.*;
 
-/**
- * Our expression grammar:
- * expression → equality ;
+/*
+ * PROGRAM GRAMMAR:
+ * program -> declaration* EOF;
+ * declaration -> varDecl | statement;
+ * statement -> exprStmt | printStmt | block;
+ * block -> "{" declaration* "}";
+ * 
+ * exprStmt -> expression ";";
+ * printStmt -> "print" expression ";";
+ *
+ * varDecl -> "var" IDENTIFIER ( "=" expression )? ";" ;
+ * 
+ * EXPRESSION GRAMMAR:
+ * expression → assignment ;
+ * assignment -> equality | IDENTIFIER "=" assignment;
  * equality → comparison ( ( "!=" | "==" ) comparison )* ;
  * comparison → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
  * term  → factor ( ( "-" | "+" ) factor )* ;
  * factor → unary ( ( "/" | "*" ) unary )* ;
  * unary  → ( "!" | "-" ) unary | primary ;
- * primary → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" ;
+ * primary → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER ;
  */
 
 public class Parser {
@@ -26,16 +39,87 @@ public class Parser {
         this.tokens = tokens;
     }
 
-    Expr parse() {
+    List<Stmt> parse() {
+        List<Stmt> statements = new ArrayList<>();
+        while(!isAtEnd()) {
+            statements.add(declaration());
+        }
+        
+        return statements;
+    }
+    
+    private Expr expression() {
+        return assignment();
+    }
+    
+    private Stmt declaration() {
         try {
-            return expression();
+            if (match(VAR)) return varDeclaration();
+            return statement();
         } catch (ParseError error) {
+            synchronize();
             return null;
         }
     }
+    
+    private Stmt varDeclaration() {
+        Token name = consume(IDENTIFIER, "Expecting variable name.");
+        
+        Expr initializer = null;
+        if(match(EQUAL)) {
+            initializer = expression();
+        }
+        
+        consume(SEMICOLON, "Expecting ';' after variable declaration.");
+        return new Stmt.Var(name, initializer);
+    }
 
-    private Expr expression() {
-        return equality();
+    private Stmt statement() {
+        if(match(PRINT)) return printStatement();
+        if(match(LEFT_BRACE)) return new Stmt.Block(block());
+        
+        return expressionStatement();
+    }
+    
+    private Stmt printStatement() {
+        Expr value = expression();
+        consume(SEMICOLON, "Expecting ';' after value in print statement.");
+        return new Stmt.Print(value);
+    }
+    
+    private Stmt expressionStatement() {
+        Expr value = expression();
+        consume(SEMICOLON, "Expecting ';' after expression in expression statement.");
+        return new Stmt.Expression(value);
+    }
+    
+    private List<Stmt> block() {
+        List<Stmt> statements = new ArrayList<>();
+        
+        while(!check(RIGHT_BRACE) && !isAtEnd()) {
+            statements.add(declaration());
+        }
+        
+        consume(RIGHT_BRACE, "Expecting closing '}' after block");
+        return statements;
+    }
+    
+    private Expr assignment() {
+        Expr expr = equality();
+        if(match(EQUAL)) {
+            Token equals = previous();
+            Expr value = assignment();
+            
+            if(expr instanceof Expr.Variable) {
+                Token name = ((Expr.Variable)expr).name;
+                return new Expr.Assign(name, value);
+            }
+
+            // We don't throw the error because we don't need the synchronization. We just report it.
+            //noinspection ThrowableNotThrown
+            error(equals, "Invalid assignment target.");
+        }
+        return expr;
     }
 
 
@@ -77,6 +161,10 @@ public class Parser {
             Expr expr = expression();
             consume(RIGHT_PAREN, "Expecting ')' after expression.");
             return new Expr.Grouping(expr);
+        }
+        
+        if (match(IDENTIFIER)) {
+            return new Expr.Variable(previous());
         }
 
         throw error(peek(), "Expecting expression.");

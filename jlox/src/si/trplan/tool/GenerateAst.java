@@ -18,10 +18,18 @@ public class GenerateAst {
         String outputDir = args[0];
         try {
             defineAst(outputDir, "Expr", Arrays.asList(
+                    "Assign : Token name, Expr value",
                     "Binary : Expr left, Token operator, Expr right",
                     "Grouping : Expr expression",
                     "Literal : Object value",
-                    "Unary : Token operator, Expr right"
+                    "Unary : Token operator, Expr right",
+                    "Variable : Token name"
+            ));
+            defineAst(outputDir, "Stmt", Arrays.asList(
+                    "Expression : Expr expression",
+                    "Print : Expr expresion",
+                    "Var : Token name, Expr initializer",
+                    "Block : List<Stmt> statements"
             ));
         } catch (IOException e) {
             throw new RuntimeException(e);
