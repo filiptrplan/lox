@@ -7,6 +7,8 @@ public class Environment {
     final Environment enclosing;
     private final Map<String, Object> values = new HashMap<>();
     
+    public static class Unassigned {}
+    
     Environment() {
         enclosing = null;
     }
@@ -17,6 +19,10 @@ public class Environment {
     
     Object get(Token name) {
         if (values.containsKey(name.lexeme)) {
+            Object value = values.get(name.lexeme);
+            if(value instanceof Unassigned) {
+                throw new RuntimeError(name, "Unassigned variable '" + name.lexeme + "'");
+            }
             return values.get(name.lexeme);
         }
         
