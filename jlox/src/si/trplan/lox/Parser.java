@@ -1,6 +1,7 @@
 package si.trplan.lox;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static si.trplan.lox.TokenType.*;
@@ -9,17 +10,22 @@ import static si.trplan.lox.TokenType.*;
  * PROGRAM GRAMMAR:
  * program -> declaration* EOF;
  * declaration -> varDecl | statement;
- * statement -> exprStmt | printStmt | block;
+ * statement -> exprStmt | printStmt | block | ifStmt | whileStmt | forStmt;
+ * forStmt -> "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement;
+ * whileStmt -> "while" "(" expression ")" statement;
+ * ifStmt -> "if" "(" expression ")" statement ( "else" statement )?
  * block -> "{" declaration* "}";
- * 
+ *
  * exprStmt -> expression ";";
  * printStmt -> "print" expression ";";
  *
  * varDecl -> "var" IDENTIFIER ( "=" expression )? ";" ;
- * 
+ *
  * EXPRESSION GRAMMAR:
  * expression → assignment ;
- * assignment -> equality | IDENTIFIER "=" assignment;
+ * assignment -> logic_or | IDENTIFIER "=" assignment;
+ * logic_or -> logic_and ( "||" logic_and )*;
+ * logic_and -> equality ( "&&" equality)*;
  * equality → comparison ( ( "!=" | "==" ) comparison )* ;
  * comparison → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
  * term  → factor ( ( "-" | "+" ) factor )* ;
@@ -34,7 +40,7 @@ public class Parser {
 
     private final List<Token> tokens;
     private int current;
-    
+
     private boolean allowExpression;
     private boolean foundExpression = false;
 
@@ -61,16 +67,16 @@ public class Parser {
 
     List<Stmt> parse() {
         List<Stmt> statements = new ArrayList<>();
-        while(!isAtEnd()) {
+        while (!isAtEnd()) {
             statements.add(declaration());
         }
         return statements;
     }
-    
+
     private Expr expression() {
         return assignment();
     }
-    
+
     private Stmt declaration() {
         try {
             if (match(VAR)) return varDeclaration();
@@ -80,61 +86,128 @@ public class Parser {
             return null;
         }
     }
-    
+
     private Stmt varDeclaration() {
         Token name = consume(IDENTIFIER, "Expecting variable name.");
-        
+
         Expr initializer = null;
-        if(match(EQUAL)) {
+        if (match(EQUAL)) {
             initializer = expression();
         }
-        
+
         consume(SEMICOLON, "Expecting ';' after variable declaration.");
         return new Stmt.Var(name, initializer);
     }
 
     private Stmt statement() {
-        if(match(PRINT)) return printStatement();
-        if(match(LEFT_BRACE)) return new Stmt.Block(block());
-        
+        if (match(PRINT)) return printStatement();
+        if (match(LEFT_BRACE)) return new Stmt.Block(block());
+        if (match(IF)) return ifStatement();
+        if (match(WHILE)) return whileStatement();
+        if (match(FOR)) return forStatement();
+
         return expressionStatement();
     }
-    
+
+    private Stmt forStatement() {
+        consume(LEFT_PAREN, "Expecting '(' after for keyword.");
+       
+        Stmt initializer;
+        if (match(SEMICOLON)) {
+            initializer = null;
+        } else if (match(VAR)) {
+            initializer = varDeclaration();
+        } else {
+            initializer = expressionStatement();
+        }
+
+        Expr condition = null;
+        if (!check(SEMICOLON)) {
+            condition = expression();
+        }
+        consume(SEMICOLON, "Expecting ';' after loop condition");
+
+        Expr increment = null;
+        if (!check(SEMICOLON)) {
+            increment = expression();
+        }
+        consume(RIGHT_PAREN, "Expecting ')' after loop condition");
+        
+        Stmt body = statement();
+        
+        if(increment != null) {
+            body = new Stmt.Block(Arrays.asList(body, new Stmt.Expression(increment)));
+        }
+        
+        if(condition == null) condition = new Expr.Literal(true);
+        body = new Stmt.While(condition, body);
+        
+        if (initializer != null) {
+            body = new Stmt.Block(Arrays.asList(initializer, body));
+        }
+        
+        return body;
+    }
+
+    private Stmt whileStatement() {
+        consume(LEFT_PAREN, "Expecting '(' after while keyword.");
+        Expr condition = expression();
+        consume(RIGHT_PAREN, "Expecting closing ')'.");
+
+        Stmt statement = statement();
+        return new Stmt.While(condition, statement);
+    }
+
+    private Stmt ifStatement() {
+
+        consume(LEFT_PAREN, "Expecting '(' after if keyword.");
+        Expr condition = expression();
+        consume(RIGHT_PAREN, "Expecting closing ')'.");
+
+        Stmt thenBranch = statement();
+        Stmt elseBranch = null;
+        if (match(ELSE)) {
+            elseBranch = statement();
+        }
+
+        return new Stmt.If(condition, thenBranch, elseBranch);
+    }
+
     private Stmt printStatement() {
         Expr value = expression();
         consume(SEMICOLON, "Expecting ';' after value in print statement.");
         return new Stmt.Print(value);
     }
-    
+
     private Stmt expressionStatement() {
         Expr value = expression();
-        if(allowExpression && isAtEnd()) {
+        if (allowExpression && isAtEnd()) {
             foundExpression = true;
         } else {
             consume(SEMICOLON, "Expecting ';' after expression in expression statement.");
         }
         return new Stmt.Expression(value);
     }
-    
+
     private List<Stmt> block() {
         List<Stmt> statements = new ArrayList<>();
-        
-        while(!check(RIGHT_BRACE) && !isAtEnd()) {
+
+        while (!check(RIGHT_BRACE) && !isAtEnd()) {
             statements.add(declaration());
         }
-        
+
         consume(RIGHT_BRACE, "Expecting closing '}' after block");
         return statements;
     }
-    
+
     private Expr assignment() {
-        Expr expr = equality();
-        if(match(EQUAL)) {
+        Expr expr = logicOr();
+        if (match(EQUAL)) {
             Token equals = previous();
             Expr value = assignment();
-            
-            if(expr instanceof Expr.Variable) {
-                Token name = ((Expr.Variable)expr).name;
+
+            if (expr instanceof Expr.Variable) {
+                Token name = ((Expr.Variable) expr).name;
                 return new Expr.Assign(name, value);
             }
 
@@ -145,6 +218,13 @@ public class Parser {
         return expr;
     }
 
+    private Expr logicOr() {
+        return parseLeftAssocLogical(this::logicAnd, OR);
+    }
+
+    private Expr logicAnd() {
+        return parseLeftAssocLogical(this::equality, AND);
+    }
 
     private Expr equality() {
         return parseLeftAssocBinary(this::comparison, EQUAL_EQUAL, BANG_EQUAL);
@@ -185,7 +265,7 @@ public class Parser {
             consume(RIGHT_PAREN, "Expecting ')' after expression.");
             return new Expr.Grouping(expr);
         }
-        
+
         if (match(IDENTIFIER)) {
             return new Expr.Variable(previous());
         }
@@ -198,7 +278,7 @@ public class Parser {
     }
 
     /**
-     * Parse a left associative rule defined as: original -> next ( ( op1 | op2 | ... ) next)*
+     * Parse a binary left associative rule defined as: original -> next ( ( op1 | op2 | ... ) next)*
      *
      * @param nextParser The "next" rule
      * @param types      Operators to match
@@ -210,6 +290,23 @@ public class Parser {
             Token operator = previous();
             Expr right = nextParser.parse();
             expr = new Expr.Binary(expr, operator, right);
+        }
+        return expr;
+    }
+
+    /**
+     * Parse a logical left associative rule defined as: original -> next ( ( op1 | op2 | ... ) next)*
+     *
+     * @param nextParser The "next" rule
+     * @param types      Operators to match
+     * @return An expression with any number of operators and next expansions
+     */
+    private Expr parseLeftAssocLogical(IExpressionParser nextParser, TokenType... types) {
+        Expr expr = nextParser.parse();
+        while (match(types)) {
+            Token operator = previous();
+            Expr right = nextParser.parse();
+            expr = new Expr.Logical(expr, operator, right);
         }
         return expr;
     }
