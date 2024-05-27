@@ -64,6 +64,24 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
     
     @Override
+    public Void visitIfStmt(Stmt.If stmt) {
+        if(isTruthy(evaluate(stmt.condition))) {
+            execute(stmt.thenBranch);
+        } else if (stmt.elseBranch != null) {
+            execute(stmt.elseBranch);
+        }
+        return null;
+    }
+    
+    @Override
+    public Void visitWhileStmt(Stmt.While stmt) {
+        while(isTruthy(evaluate(stmt.condition))) {
+            execute(stmt.statement);
+        }
+        return null;
+    }
+    
+    @Override
     public Void visitVarStmt(Stmt.Var stmt) {
         Object value = new Environment.Unassigned();
         if(stmt.initializer != null) {
@@ -203,6 +221,24 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                     throw new RuntimeError(expr.operator, "Division by zero.");
                 }
                 yield (double) left / (double) right;
+            }
+            // Unreachable
+            default -> null;
+        };
+    }
+
+    @Override
+    public Object visitLogicalExpr(Expr.Logical expr) {
+        return switch (expr.operator.type) {
+            case AND -> {
+                Object first = evaluate(expr.left);
+                if(!isTruthy(first)) yield first;
+                else yield evaluate(expr.right);
+            }
+            case OR -> {
+                Object first = evaluate(expr.left);
+                if(isTruthy(first)) yield first;
+                else yield evaluate(expr.right);
             }
             // Unreachable
             default -> null;
