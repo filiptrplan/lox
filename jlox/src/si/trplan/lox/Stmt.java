@@ -10,6 +10,7 @@ abstract class Stmt {
  R visitBlockStmt(Block stmt);
  R visitIfStmt(If stmt);
  R visitWhileStmt(While stmt);
+ R visitBreakStmt(Break stmt);
  }
  public static class Expression extends Stmt {
  Expression(Expr expression) {
@@ -90,6 +91,16 @@ abstract class Stmt {
 
  final Expr condition;
  final Stmt statement;
+ }
+ public static class Break extends Stmt {
+ Break() {
+ }
+
+ @Override
+ <R> R accept(Visitor<R> visitor) {
+ return visitor.visitBreakStmt(this);
+ }
+
  }
 
  abstract <R> R accept(Visitor<R> visitor);

@@ -10,7 +10,9 @@ import static si.trplan.lox.TokenType.*;
  * PROGRAM GRAMMAR:
  * program -> declaration* EOF;
  * declaration -> varDecl | statement;
- * statement -> exprStmt | printStmt | block | ifStmt | whileStmt | forStmt;
+ * statement -> exprStmt | printStmt | block | ifStmt | whileStmt | forStmt | breakStmt;
+ *
+ * breakStmt -> "break" ";" ;
  * forStmt -> "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement;
  * whileStmt -> "while" "(" expression ")" statement;
  * ifStmt -> "if" "(" expression ")" statement ( "else" statement )?
@@ -43,6 +45,8 @@ public class Parser {
 
     private boolean allowExpression;
     private boolean foundExpression = false;
+
+    private boolean insideWhile = false;
 
     Parser(List<Token> tokens) {
         this.tokens = tokens;
@@ -105,13 +109,24 @@ public class Parser {
         if (match(IF)) return ifStatement();
         if (match(WHILE)) return whileStatement();
         if (match(FOR)) return forStatement();
+        if (match(BREAK)) return breakStatement();
 
         return expressionStatement();
     }
 
+    private Stmt breakStatement() {
+        consume(SEMICOLON, "Expect ';' after break statement.");
+        if (!insideWhile) {
+            // We just skip the statement and report the error, no need for synchronization
+            //noinspection ThrowableNotThrown
+            error(previous(), "Break keyword can only be used inside for or while loop.");
+        }
+        return new Stmt.Break();
+    }
+
     private Stmt forStatement() {
         consume(LEFT_PAREN, "Expecting '(' after for keyword.");
-       
+
         Stmt initializer;
         if (match(SEMICOLON)) {
             initializer = null;
@@ -132,20 +147,26 @@ public class Parser {
             increment = expression();
         }
         consume(RIGHT_PAREN, "Expecting ')' after loop condition");
-        
-        Stmt body = statement();
-        
-        if(increment != null) {
+
+        Stmt body;
+        try {
+            insideWhile = true;
+            body = statement();
+        } finally {
+            insideWhile = false;
+        }
+
+        if (increment != null) {
             body = new Stmt.Block(Arrays.asList(body, new Stmt.Expression(increment)));
         }
-        
-        if(condition == null) condition = new Expr.Literal(true);
+
+        if (condition == null) condition = new Expr.Literal(true);
         body = new Stmt.While(condition, body);
-        
+
         if (initializer != null) {
             body = new Stmt.Block(Arrays.asList(initializer, body));
         }
-        
+
         return body;
     }
 
@@ -154,7 +175,13 @@ public class Parser {
         Expr condition = expression();
         consume(RIGHT_PAREN, "Expecting closing ')'.");
 
-        Stmt statement = statement();
+        Stmt statement;
+        try {
+            insideWhile = true;
+            statement = statement();
+        } finally {
+            insideWhile = false;
+        }
         return new Stmt.While(condition, statement);
     }
 
@@ -391,6 +418,7 @@ public class Parser {
                 case RETURN:
                     return;
             }
+            advance();
         }
     }
 }
