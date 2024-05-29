@@ -38,7 +38,8 @@ import static si.trplan.lox.TokenType.*;
  * comparison → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
  * term  → factor ( ( "-" | "+" ) factor )* ;
  * factor → unary ( ( "/" | "*" ) unary )* ;
- * unary  → ( "!" | "-" ) unary | call ;
+ * unary  → ( "!" | "-" ) unary | funcExpr;
+ * funcExpr -> "fun" "(" arguments? ")" block | call;
  * call -> primary ( "(" arguments? ")" )* ;
  * primary → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER ;
  */
@@ -317,7 +318,7 @@ public class Parser {
             Expr right = unary();
             return new Expr.Unary(operator, right);
         }
-        return call();
+        return funcExpr();
     }
     
     private Expr call() {
@@ -330,6 +331,32 @@ public class Parser {
             }
         }
         return expr;
+    }
+    
+    private Expr funcExpr() {
+        
+        if (!match(FUN)) {
+            return call();
+        }
+        consume(LEFT_PAREN, "Expect '(' after fun keyword.");
+
+        List<Token> parameters = new ArrayList<>();
+        if(!check(RIGHT_PAREN)) {
+            do {
+                if(parameters.size() >= 255) {
+                    // We don't need to synchronize here
+                    error(peek(), "Can't have more than 255 parameters.");
+                }
+                parameters.add(consume(IDENTIFIER, "Expecting only identifiers as function parameters"));
+            } while (match(COMMA));
+        }
+
+        consume(RIGHT_PAREN, "Expect ')' after function arguments.");
+
+        consume(LEFT_BRACE, "Expect '{' before function body.");
+        List<Stmt> body = block();
+        
+        return new Expr.Function(parameters, body);
     }
     
     private Expr finishCall(Expr callee) {

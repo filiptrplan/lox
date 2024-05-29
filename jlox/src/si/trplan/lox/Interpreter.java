@@ -212,6 +212,11 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         }
         return function.call(this, arguments);
     }
+    
+    @Override
+    public Object visitFunctionExpr(Expr.Function expr) {
+        return new LoxFunction(new Stmt.Function(null, expr.params, expr.body), environment); 
+    }
 
     @Override
     public Object visitVariableExpr(Expr.Variable expr) {
