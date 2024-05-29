@@ -22,6 +22,7 @@ public class GenerateAst {
                     "Binary : Expr left, Token operator, Expr right",
                     "Logical : Expr left, Token operator, Expr right",
                     "Grouping : Expr expression",
+                    "Call : Expr callee, Token paren, List<Expr> arguments",
                     "Literal : Object value",
                     "Unary : Token operator, Expr right",
                     "Variable : Token name"
@@ -31,9 +32,11 @@ public class GenerateAst {
                     "Print : Expr expresion",
                     "Var : Token name, Expr initializer",
                     "Block : List<Stmt> statements",
+                    "Function : Token name, List<Token> params, List<Stmt> body",
                     "If: Expr condition, Stmt thenBranch, Stmt elseBranch",
                     "While : Expr condition, Stmt statement",
-                    "Break : "
+                    "Break : ",
+                    "Return : Token keyword, Expr value"
             ));
         } catch (IOException e) {
             throw new RuntimeException(e);

@@ -9,8 +9,8 @@ import static si.trplan.lox.TokenType.*;
 /*
  * PROGRAM GRAMMAR:
  * program -> declaration* EOF;
- * declaration -> varDecl | statement;
- * statement -> exprStmt | printStmt | block | ifStmt | whileStmt | forStmt | breakStmt;
+ * declaration -> varDecl | statement | function;
+ * statement -> exprStmt | printStmt | block | ifStmt | whileStmt | forStmt | breakStmt | returnStmt;
  *
  * breakStmt -> "break" ";" ;
  * forStmt -> "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement;
@@ -22,6 +22,12 @@ import static si.trplan.lox.TokenType.*;
  * printStmt -> "print" expression ";";
  *
  * varDecl -> "var" IDENTIFIER ( "=" expression )? ";" ;
+ * funDecl -> "fun" function;
+ * function -> IDENTIFIER "(" parameters? ")" block;
+ * parameters -> IDENTIFIER ( "," IDENTIFIER )* ;
+ * returnStmt -> "return" expression? ";" ;
+ * 
+ * arguments -> expression ( "," expression )* ;
  *
  * EXPRESSION GRAMMAR:
  * expression → assignment ;
@@ -32,7 +38,8 @@ import static si.trplan.lox.TokenType.*;
  * comparison → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
  * term  → factor ( ( "-" | "+" ) factor )* ;
  * factor → unary ( ( "/" | "*" ) unary )* ;
- * unary  → ( "!" | "-" ) unary | primary ;
+ * unary  → ( "!" | "-" ) unary | call ;
+ * call -> primary ( "(" arguments? ")" )* ;
  * primary → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER ;
  */
 
@@ -46,7 +53,7 @@ public class Parser {
     private boolean allowExpression;
     private boolean foundExpression = false;
 
-    private boolean insideWhile = false;
+    private int whileDepth = 0;
 
     Parser(List<Token> tokens) {
         this.tokens = tokens;
@@ -84,11 +91,36 @@ public class Parser {
     private Stmt declaration() {
         try {
             if (match(VAR)) return varDeclaration();
+            if (match(FUN)) return function("function");
             return statement();
         } catch (ParseError error) {
             synchronize();
             return null;
         }
+    }
+    
+    private Stmt function(String kind) {
+        Token name = consume(IDENTIFIER, "Expect " + kind + " name.");
+        
+        consume(LEFT_PAREN, "Expect '(' after " + kind + " name.");
+        
+        List<Token> parameters = new ArrayList<>();
+        if(!check(RIGHT_PAREN)) {
+            do {
+                if(parameters.size() >= 255) {
+                    // We don't need to synchronize here
+                    error(peek(), "Can't have more than 255 parameters.");
+                }
+                parameters.add(consume(IDENTIFIER, "Expecting only identifiers as " + kind + " parameters"));
+            } while (match(COMMA));
+        }
+        
+        consume(RIGHT_PAREN, "Expect ')' after " + kind + " arguments.");
+        
+        consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
+        List<Stmt> body = block();
+        
+        return new Stmt.Function(name, parameters, body);
     }
 
     private Stmt varDeclaration() {
@@ -110,13 +142,23 @@ public class Parser {
         if (match(WHILE)) return whileStatement();
         if (match(FOR)) return forStatement();
         if (match(BREAK)) return breakStatement();
+        if (match(RETURN)) return returnStatement();
 
         return expressionStatement();
+    }
+    
+    private Stmt returnStatement() {
+        Token keyword = previous();
+        Expr value = null;
+        if (match(SEMICOLON)) return new Stmt.Return(keyword, value);
+        value = expression();
+        consume(SEMICOLON, "Expect ';' after value in return statement");
+        return new Stmt.Return(keyword, value);
     }
 
     private Stmt breakStatement() {
         consume(SEMICOLON, "Expect ';' after break statement.");
-        if (!insideWhile) {
+        if (whileDepth == 0) {
             // We just skip the statement and report the error, no need for synchronization
             //noinspection ThrowableNotThrown
             error(previous(), "Break keyword can only be used inside for or while loop.");
@@ -150,10 +192,10 @@ public class Parser {
 
         Stmt body;
         try {
-            insideWhile = true;
+            whileDepth++;
             body = statement();
         } finally {
-            insideWhile = false;
+            whileDepth--;
         }
 
         if (increment != null) {
@@ -177,10 +219,10 @@ public class Parser {
 
         Stmt statement;
         try {
-            insideWhile = true;
+            whileDepth++;
             statement = statement();
         } finally {
-            insideWhile = false;
+            whileDepth--;
         }
         return new Stmt.While(condition, statement);
     }
@@ -275,7 +317,36 @@ public class Parser {
             Expr right = unary();
             return new Expr.Unary(operator, right);
         }
-        return primary();
+        return call();
+    }
+    
+    private Expr call() {
+        Expr expr = primary();
+        while(true) {
+            if (match(LEFT_PAREN)) {
+                expr = finishCall(expr);
+            } else {
+                break;
+            }
+        }
+        return expr;
+    }
+    
+    private Expr finishCall(Expr callee) {
+        List<Expr> arguments = new ArrayList<>();
+        if(!check(RIGHT_PAREN)) {
+            do {
+                if(arguments.size() >= 255) {
+                    //noinspection ThrowableNotThrown
+                    error(peek(), "Can't have more than 255 arguments.");
+                }
+                arguments.add(expression());
+            } while (match(COMMA));
+        }
+        
+        Token paren = consume(RIGHT_PAREN, "Expect ')' after arguments.");
+        
+        return new Expr.Call(callee, paren, arguments);
     }
 
     private Expr primary() {
