@@ -26,7 +26,7 @@ import static si.trplan.lox.TokenType.*;
  * function -> IDENTIFIER "(" parameters? ")" block;
  * parameters -> IDENTIFIER ( "," IDENTIFIER )* ;
  * returnStmt -> "return" expression? ";" ;
- * 
+ *
  * arguments -> expression ( "," expression )* ;
  *
  * EXPRESSION GRAMMAR:
@@ -53,8 +53,6 @@ public class Parser {
 
     private boolean allowExpression;
     private boolean foundExpression = false;
-
-    private int whileDepth = 0;
 
     Parser(List<Token> tokens) {
         this.tokens = tokens;
@@ -99,28 +97,28 @@ public class Parser {
             return null;
         }
     }
-    
+
     private Stmt function(String kind) {
         Token name = consume(IDENTIFIER, "Expect " + kind + " name.");
-        
+
         consume(LEFT_PAREN, "Expect '(' after " + kind + " name.");
-        
+
         List<Token> parameters = new ArrayList<>();
-        if(!check(RIGHT_PAREN)) {
+        if (!check(RIGHT_PAREN)) {
             do {
-                if(parameters.size() >= 255) {
+                if (parameters.size() >= 255) {
                     // We don't need to synchronize here
                     error(peek(), "Can't have more than 255 parameters.");
                 }
                 parameters.add(consume(IDENTIFIER, "Expecting only identifiers as " + kind + " parameters"));
             } while (match(COMMA));
         }
-        
+
         consume(RIGHT_PAREN, "Expect ')' after " + kind + " arguments.");
-        
+
         consume(LEFT_BRACE, "Expect '{' before " + kind + " body.");
         List<Stmt> body = block();
-        
+
         return new Stmt.Function(name, parameters, body);
     }
 
@@ -147,7 +145,7 @@ public class Parser {
 
         return expressionStatement();
     }
-    
+
     private Stmt returnStatement() {
         Token keyword = previous();
         Expr value = null;
@@ -158,13 +156,9 @@ public class Parser {
     }
 
     private Stmt breakStatement() {
+        Token breakToken = previous();
         consume(SEMICOLON, "Expect ';' after break statement.");
-        if (whileDepth == 0) {
-            // We just skip the statement and report the error, no need for synchronization
-            //noinspection ThrowableNotThrown
-            error(previous(), "Break keyword can only be used inside for or while loop.");
-        }
-        return new Stmt.Break();
+        return new Stmt.Break(breakToken);
     }
 
     private Stmt forStatement() {
@@ -192,12 +186,7 @@ public class Parser {
         consume(RIGHT_PAREN, "Expecting ')' after loop condition");
 
         Stmt body;
-        try {
-            whileDepth++;
-            body = statement();
-        } finally {
-            whileDepth--;
-        }
+        body = statement();
 
         if (increment != null) {
             body = new Stmt.Block(Arrays.asList(body, new Stmt.Expression(increment)));
@@ -218,13 +207,7 @@ public class Parser {
         Expr condition = expression();
         consume(RIGHT_PAREN, "Expecting closing ')'.");
 
-        Stmt statement;
-        try {
-            whileDepth++;
-            statement = statement();
-        } finally {
-            whileDepth--;
-        }
+        Stmt statement = statement();
         return new Stmt.While(condition, statement);
     }
 
@@ -320,10 +303,10 @@ public class Parser {
         }
         return funcExpr();
     }
-    
+
     private Expr call() {
         Expr expr = primary();
-        while(true) {
+        while (true) {
             if (match(LEFT_PAREN)) {
                 expr = finishCall(expr);
             } else {
@@ -332,18 +315,18 @@ public class Parser {
         }
         return expr;
     }
-    
+
     private Expr funcExpr() {
-        
+
         if (!match(FUN)) {
             return call();
         }
         consume(LEFT_PAREN, "Expect '(' after fun keyword.");
 
         List<Token> parameters = new ArrayList<>();
-        if(!check(RIGHT_PAREN)) {
+        if (!check(RIGHT_PAREN)) {
             do {
-                if(parameters.size() >= 255) {
+                if (parameters.size() >= 255) {
                     // We don't need to synchronize here
                     error(peek(), "Can't have more than 255 parameters.");
                 }
@@ -355,24 +338,24 @@ public class Parser {
 
         consume(LEFT_BRACE, "Expect '{' before function body.");
         List<Stmt> body = block();
-        
+
         return new Expr.Function(parameters, body);
     }
-    
+
     private Expr finishCall(Expr callee) {
         List<Expr> arguments = new ArrayList<>();
-        if(!check(RIGHT_PAREN)) {
+        if (!check(RIGHT_PAREN)) {
             do {
-                if(arguments.size() >= 255) {
+                if (arguments.size() >= 255) {
                     //noinspection ThrowableNotThrown
                     error(peek(), "Can't have more than 255 arguments.");
                 }
                 arguments.add(expression());
             } while (match(COMMA));
         }
-        
+
         Token paren = consume(RIGHT_PAREN, "Expect ')' after arguments.");
-        
+
         return new Expr.Call(callee, paren, arguments);
     }
 

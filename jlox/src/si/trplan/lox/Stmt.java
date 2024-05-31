@@ -111,7 +111,8 @@ abstract class Stmt {
  final Stmt statement;
  }
  public static class Break extends Stmt {
- Break() {
+ Break(Token keyword) {
+ this.keyword = keyword;
  }
 
  @Override
@@ -119,6 +120,7 @@ abstract class Stmt {
  return visitor.visitBreakStmt(this);
  }
 
+ final Token keyword;
  }
  public static class Return extends Stmt {
  Return(Token keyword, Expr value) {

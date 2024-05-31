@@ -36,7 +36,7 @@ public class GenerateAst {
                     "Function : Token name, List<Token> params, List<Stmt> body",
                     "If: Expr condition, Stmt thenBranch, Stmt elseBranch",
                     "While : Expr condition, Stmt statement",
-                    "Break : ",
+                    "Break : Token keyword",
                     "Return : Token keyword, Expr value"
             ));
         } catch (IOException e) {
