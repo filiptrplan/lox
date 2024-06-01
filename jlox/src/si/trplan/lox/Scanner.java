@@ -37,7 +37,7 @@ public class Scanner {
 
     private int start = 0;
     private int current = 0;
-    private int line = 0;
+    private int line = 1;
 
     Scanner(String source) {
         this.source = source;
