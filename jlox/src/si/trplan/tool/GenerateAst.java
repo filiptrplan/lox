@@ -41,7 +41,7 @@ public class GenerateAst {
                     "While : Expr condition, Stmt statement",
                     "Break : Token keyword",
                     "Return : Token keyword, Expr value",
-                    "Class : Token name, List<Stmt.Function> methods"
+                    "Class : Token name, List<Stmt.Function> methods, List<Stmt.Function> getters"
             ));
         } catch (IOException e) {
             throw new RuntimeException(e);

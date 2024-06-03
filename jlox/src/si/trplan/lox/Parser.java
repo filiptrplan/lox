@@ -3,6 +3,7 @@ package si.trplan.lox;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import static si.trplan.lox.TokenType.*;
 
@@ -21,13 +22,14 @@ import static si.trplan.lox.TokenType.*;
  * exprStmt -> expression ";";
  * printStmt -> "print" expression ";";
  * 
- * classDecl -> "class" IDENTIFIER "{" function* "}" ;
+ * classDecl -> "class" IDENTIFIER "{" (function | getter)* "}" ;
  *
  * varDecl -> "var" IDENTIFIER ( "=" expression )? ";" ;
  * funDecl -> "fun" function;
  * function -> IDENTIFIER "(" parameters? ")" block;
  * parameters -> IDENTIFIER ( "," IDENTIFIER )* ;
  * returnStmt -> "return" expression? ";" ;
+ * getter -> IDENTIFIER block;
  *
  * arguments -> expression ( "," expression )* ;
  *
@@ -43,7 +45,7 @@ import static si.trplan.lox.TokenType.*;
  * unary  → ( "!" | "-" ) unary | funcExpr;
  * funcExpr -> "fun" "(" arguments? ")" block | call;
  * call -> primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
- * primary → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER ;
+ * primary → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER | "this" ;
  */
 
 public class Parser {
@@ -105,12 +107,26 @@ public class Parser {
         Token name = consume(IDENTIFIER, "Expect identifier after class keyword.");
         consume(LEFT_BRACE, "Expect '{' after class name.");
         List<Stmt.Function> methods = new ArrayList<>();
+        List<Stmt.Function> getters = new ArrayList<>();
         while(!check(RIGHT_BRACE) && !isAtEnd()) {
-            methods.add((Stmt.Function)function("method")); 
+            // Check if it is a function or a getter
+            Token next = peekNext();
+            if(next != null && next.type == LEFT_BRACE) {
+                getters.add((Stmt.Function)getter());
+            } else {
+                methods.add((Stmt.Function)function("method"));
+            }
         }
         
         consume(RIGHT_BRACE, "Expect '}' after class body");
-        return new Stmt.Class(name, methods);
+        return new Stmt.Class(name, methods, getters);
+    }
+    
+    private Stmt getter() {
+        Token name = consume(IDENTIFIER, "Expect getter name.");
+        consume(LEFT_BRACE, "Expect '{' after getter name.");
+        List<Stmt> body = block();
+        return new Stmt.Function(name, new ArrayList<>(), body);
     }
 
     private Stmt function(String kind) {
@@ -477,6 +493,16 @@ public class Parser {
      */
     private Token peek() {
         return tokens.get(current);
+    }
+
+    /**
+     * @return The next token or null if at end of string
+     */
+    private Token peekNext() {
+        if(current + 1 >= tokens.size()) {
+            return null;
+        }
+        return tokens.get(current + 1);
     }
 
     /**

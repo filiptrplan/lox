@@ -128,6 +128,11 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
             if(method.name.lexeme.equals("init")) declaration = FunctionType.INITIALIZER;
             resolveFunction(method, declaration);
         }
+        
+        for (Stmt.Function getter : stmt.getters) {
+            FunctionType declaration = FunctionType.METHOD;
+            resolveFunction(getter, declaration);
+        }
 
         endScope();
 
