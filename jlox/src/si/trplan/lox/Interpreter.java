@@ -129,6 +129,21 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
     
     @Override
+    public Void visitClassStmt(Stmt.Class stmt) {
+        environment.define(stmt.name.lexeme, null);
+        
+        Map<String, LoxFunction> methods = new HashMap<>();
+        for(Stmt.Function method : stmt.methods) {
+            LoxFunction function = new LoxFunction(method, environment);
+            methods.put(method.name.lexeme, function);
+        }
+        
+        LoxClass klass = new LoxClass(stmt.name.lexeme, methods);
+        environment.assign(stmt.name, klass);
+        return null;
+    }
+    
+    @Override
     public Void visitFunctionStmt(Stmt.Function stmt) {
         LoxFunction function = new LoxFunction(stmt, environment);
         environment.define(stmt.name.lexeme, function);
@@ -230,6 +245,26 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     @Override
     public Object visitFunctionExpr(Expr.Function expr) {
         return new LoxFunction(new Stmt.Function(null, expr.params, expr.body), environment); 
+    }
+    
+    @Override
+    public Object visitGetExpr(Expr.Get expr) {
+        Object object = evaluate(expr.object);
+        if(!(object instanceof LoxInstance)) {
+            throw new RuntimeError(expr.name, "Property access is allowed only on class instances.");
+        }
+        return ((LoxInstance)object).get(expr.name);
+    }
+    
+    @Override
+    public Object visitSetExpr(Expr.Set expr) {
+        Object object = evaluate(expr.object);
+        if(!(object instanceof LoxInstance)) {
+            throw new RuntimeError(expr.name, "Property setting is allowed only on class instances.");
+        }
+        Object value = evaluate(expr.value);
+        ((LoxInstance)object).set(expr.name, value);
+        return value;
     }
 
     @Override

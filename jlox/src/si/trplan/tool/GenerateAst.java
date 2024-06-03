@@ -25,8 +25,10 @@ public class GenerateAst {
                     "Call : Expr callee, Token paren, List<Expr> arguments",
                     "Literal : Object value",
                     "Unary : Token operator, Expr right",
+                    "Set : Expr object, Token name, Expr value",
                     "Variable : Token name",
-                    "Function : List<Token> params, List<Stmt> body"
+                    "Function : List<Token> params, List<Stmt> body",
+                    "Get : Expr object, Token name"
             ));
             defineAst(outputDir, "Stmt", Arrays.asList(
                     "Expression : Expr expression",
@@ -37,7 +39,8 @@ public class GenerateAst {
                     "If: Expr condition, Stmt thenBranch, Stmt elseBranch",
                     "While : Expr condition, Stmt statement",
                     "Break : Token keyword",
-                    "Return : Token keyword, Expr value"
+                    "Return : Token keyword, Expr value",
+                    "Class : Token name, List<Stmt.Function> methods"
             ));
         } catch (IOException e) {
             throw new RuntimeException(e);

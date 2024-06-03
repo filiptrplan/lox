@@ -9,7 +9,7 @@ import static si.trplan.lox.TokenType.*;
 /*
  * PROGRAM GRAMMAR:
  * program -> declaration* EOF;
- * declaration -> varDecl | statement | function;
+ * declaration -> classDecl | varDecl | statement | function;
  * statement -> exprStmt | printStmt | block | ifStmt | whileStmt | forStmt | breakStmt | returnStmt;
  *
  * breakStmt -> "break" ";" ;
@@ -20,6 +20,8 @@ import static si.trplan.lox.TokenType.*;
  *
  * exprStmt -> expression ";";
  * printStmt -> "print" expression ";";
+ * 
+ * classDecl -> "class" IDENTIFIER "{" function* "}" ;
  *
  * varDecl -> "var" IDENTIFIER ( "=" expression )? ";" ;
  * funDecl -> "fun" function;
@@ -40,7 +42,7 @@ import static si.trplan.lox.TokenType.*;
  * factor → unary ( ( "/" | "*" ) unary )* ;
  * unary  → ( "!" | "-" ) unary | funcExpr;
  * funcExpr -> "fun" "(" arguments? ")" block | call;
- * call -> primary ( "(" arguments? ")" )* ;
+ * call -> primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
  * primary → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER ;
  */
 
@@ -91,11 +93,24 @@ public class Parser {
         try {
             if (match(VAR)) return varDeclaration();
             if (match(FUN)) return function("function");
+            if (match(CLASS)) return classDeclaration();
             return statement();
         } catch (ParseError error) {
             synchronize();
             return null;
         }
+    }
+    
+    private Stmt classDeclaration() {
+        Token name = consume(IDENTIFIER, "Expect identifier after class keyword.");
+        consume(LEFT_BRACE, "Expect '{' after class name.");
+        List<Stmt.Function> methods = new ArrayList<>();
+        while(!check(RIGHT_BRACE) && !isAtEnd()) {
+            methods.add((Stmt.Function)function("method")); 
+        }
+        
+        consume(RIGHT_BRACE, "Expect '}' after class body");
+        return new Stmt.Class(name, methods);
     }
 
     private Stmt function(String kind) {
@@ -262,6 +277,9 @@ public class Parser {
             if (expr instanceof Expr.Variable) {
                 Token name = ((Expr.Variable) expr).name;
                 return new Expr.Assign(name, value);
+            } else if (expr instanceof  Expr.Get) {
+                Expr.Get getExpr = (Expr.Get)expr;
+                return new Expr.Set(getExpr.object, getExpr.name, value);
             }
 
             // We don't throw the error because we don't need the synchronization. We just report it.
@@ -309,6 +327,9 @@ public class Parser {
         while (true) {
             if (match(LEFT_PAREN)) {
                 expr = finishCall(expr);
+            } else if (match(DOT)) {
+                Token name = consume(IDENTIFIER, "Expect identifier after dot.");
+                expr = new Expr.Get(expr, name);
             } else {
                 break;
             }
