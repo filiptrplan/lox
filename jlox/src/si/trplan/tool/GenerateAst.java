@@ -28,7 +28,8 @@ public class GenerateAst {
                     "Set : Expr object, Token name, Expr value",
                     "Variable : Token name",
                     "Function : List<Token> params, List<Stmt> body",
-                    "Get : Expr object, Token name"
+                    "Get : Expr object, Token name",
+                    "This : Token keyword"
             ));
             defineAst(outputDir, "Stmt", Arrays.asList(
                     "Expression : Expr expression",

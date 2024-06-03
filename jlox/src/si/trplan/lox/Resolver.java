@@ -23,8 +23,16 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     private enum FunctionType {
         NONE,
         FUNCTION,
+        INITIALIZER,
         METHOD
     }
+    
+    private enum ClassType {
+        NONE,
+        CLASS
+    }
+    
+    private ClassType currentClass = ClassType.NONE;
 
     void resolve(List<Stmt> statements) {
         for (Stmt statement : statements) {
@@ -106,13 +114,25 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
     
     @Override
     public Void visitClassStmt(Stmt.Class stmt) {
+        ClassType enclosing = currentClass;
+        currentClass = ClassType.CLASS;
+
         declare(stmt.name);
         define(stmt.name);
         
+        beginScope();
+        scopes.peek().put("this", new VariableState(null, true, true));
+        
         for (Stmt.Function method : stmt.methods) {
             FunctionType declaration = FunctionType.METHOD;
+            if(method.name.lexeme.equals("init")) declaration = FunctionType.INITIALIZER;
             resolveFunction(method, declaration);
         }
+
+        endScope();
+
+        currentClass = enclosing;
+        
         return null;
     }
 
@@ -163,6 +183,16 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         resolve(expr.object);
         return null;
     }
+    
+    @Override
+    public Void visitThisExpr(Expr.This expr) {
+        if(currentClass == ClassType.NONE) {
+            Lox.error(expr.keyword, "Can't use 'this' outside of a class.");
+            return null;
+        }
+        resolveLocal(expr, expr.keyword, true);
+        return null;
+    }
 
     private class VariableState {
         boolean defined = false;
@@ -207,7 +237,12 @@ public class Resolver implements Expr.Visitor<Void>, Stmt.Visitor<Void> {
         if (currentFunction == FunctionType.NONE) {
             Lox.error(stmt.keyword, "Can't return in top-level statement.");
         }
-        resolve(stmt.value);
+        if(stmt.value != null) {
+            if (currentFunction == FunctionType.INITIALIZER) {
+                Lox.error(stmt.keyword, "Can't return in an initializer.");
+            }
+            resolve(stmt.value);
+        }
         return null;
     }
 

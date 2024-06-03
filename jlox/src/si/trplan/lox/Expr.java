@@ -15,6 +15,7 @@ abstract class Expr {
  R visitVariableExpr(Variable expr);
  R visitFunctionExpr(Function expr);
  R visitGetExpr(Get expr);
+ R visitThisExpr(This expr);
  }
  public static class Assign extends Expr {
  Assign(Token name, Expr value) {
@@ -171,6 +172,18 @@ abstract class Expr {
 
  final Expr object;
  final Token name;
+ }
+ public static class This extends Expr {
+ This(Token keyword) {
+ this.keyword = keyword;
+ }
+
+ @Override
+ <R> R accept(Visitor<R> visitor) {
+ return visitor.visitThisExpr(this);
+ }
+
+ final Token keyword;
  }
 
  abstract <R> R accept(Visitor<R> visitor);
