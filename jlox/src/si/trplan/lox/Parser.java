@@ -21,8 +21,8 @@ import static si.trplan.lox.TokenType.*;
  *
  * exprStmt -> expression ";";
  * printStmt -> "print" expression ";";
- * 
- * classDecl -> "class" IDENTIFIER "{" (function | getter)* "}" ;
+ *
+ * classDecl -> "class" IDENTIFIER ( "<' IDENTIFIER )? "{" (function | getter)* "}" ;
  *
  * varDecl -> "var" IDENTIFIER ( "=" expression )? ";" ;
  * funDecl -> "fun" function;
@@ -45,7 +45,7 @@ import static si.trplan.lox.TokenType.*;
  * unary  → ( "!" | "-" ) unary | funcExpr;
  * funcExpr -> "fun" "(" arguments? ")" block | call;
  * call -> primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
- * primary → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER | "this" ;
+ * primary → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER | "this" | "super" "." IDENTIFIER ;
  */
 
 public class Parser {
@@ -102,26 +102,33 @@ public class Parser {
             return null;
         }
     }
-    
+
     private Stmt classDeclaration() {
         Token name = consume(IDENTIFIER, "Expect identifier after class keyword.");
+
+        Expr.Variable superclass = null;
+        if (match(LESS)) {
+            consume(IDENTIFIER, "Expect superclass name.");
+            superclass = new Expr.Variable(previous());
+        }
+
         consume(LEFT_BRACE, "Expect '{' after class name.");
         List<Stmt.Function> methods = new ArrayList<>();
         List<Stmt.Function> getters = new ArrayList<>();
-        while(!check(RIGHT_BRACE) && !isAtEnd()) {
+        while (!check(RIGHT_BRACE) && !isAtEnd()) {
             // Check if it is a function or a getter
             Token next = peekNext();
-            if(next != null && next.type == LEFT_BRACE) {
-                getters.add((Stmt.Function)getter());
+            if (next != null && next.type == LEFT_BRACE) {
+                getters.add((Stmt.Function) getter());
             } else {
-                methods.add((Stmt.Function)function("method"));
+                methods.add((Stmt.Function) function("method"));
             }
         }
-        
+
         consume(RIGHT_BRACE, "Expect '}' after class body");
-        return new Stmt.Class(name, methods, getters);
+        return new Stmt.Class(name, superclass, methods, getters);
     }
-    
+
     private Stmt getter() {
         Token name = consume(IDENTIFIER, "Expect getter name.");
         consume(LEFT_BRACE, "Expect '{' after getter name.");
@@ -293,8 +300,8 @@ public class Parser {
             if (expr instanceof Expr.Variable) {
                 Token name = ((Expr.Variable) expr).name;
                 return new Expr.Assign(name, value);
-            } else if (expr instanceof  Expr.Get) {
-                Expr.Get getExpr = (Expr.Get)expr;
+            } else if (expr instanceof Expr.Get) {
+                Expr.Get getExpr = (Expr.Get) expr;
                 return new Expr.Set(getExpr.object, getExpr.name, value);
             }
 
@@ -410,15 +417,21 @@ public class Parser {
             consume(RIGHT_PAREN, "Expecting ')' after expression.");
             return new Expr.Grouping(expr);
         }
-        
-        if  (match(THIS)) {
+
+        if (match(THIS)) {
             return new Expr.This(previous());
+        }
+
+        if (match(SUPER)) {
+            Token keyword = previous();
+            consume(DOT, "Expect '.' after super");
+            return new Expr.Super(keyword, consume(IDENTIFIER, "Expect superclass method name after '.'"));
         }
 
         if (match(IDENTIFIER)) {
             return new Expr.Variable(previous());
         }
-        
+
 
         throw error(peek(), "Expecting expression.");
     }
@@ -499,7 +512,7 @@ public class Parser {
      * @return The next token or null if at end of string
      */
     private Token peekNext() {
-        if(current + 1 >= tokens.size()) {
+        if (current + 1 >= tokens.size()) {
             return null;
         }
         return tokens.get(current + 1);

@@ -29,7 +29,8 @@ public class GenerateAst {
                     "Variable : Token name",
                     "Function : List<Token> params, List<Stmt> body",
                     "Get : Expr object, Token name",
-                    "This : Token keyword"
+                    "This : Token keyword",
+                    "Super : Token keyword, Token method"
             ));
             defineAst(outputDir, "Stmt", Arrays.asList(
                     "Expression : Expr expression",
@@ -41,7 +42,8 @@ public class GenerateAst {
                     "While : Expr condition, Stmt statement",
                     "Break : Token keyword",
                     "Return : Token keyword, Expr value",
-                    "Class : Token name, List<Stmt.Function> methods, List<Stmt.Function> getters"
+                    "Class : Token name, Expr.Variable superclass, " +
+                            "List<Stmt.Function> methods, List<Stmt.Function> getters"
             ));
         } catch (IOException e) {
             throw new RuntimeException(e);
