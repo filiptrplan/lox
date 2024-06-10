@@ -7,11 +7,9 @@
 int main(int argc, const char* argv[]) {
     if (argc == 1) {
         repl();
-    }
-    else if (argc == 2) {
+    } else if (argc == 2) {
         runFile(argv[1]);
-    }
-    else {
+    } else {
     }
     initVM();
     Chunk chunk;
