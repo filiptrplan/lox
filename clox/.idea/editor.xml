@@ -14,5 +14,6 @@
     <option name="/Default/CodeStyle/CodeFormatting/CppFormatting/PLACE_ELSE_ON_NEW_LINE/@EntryValue" value="false" type="bool" />
     <option name="/Default/CodeStyle/CodeFormatting/CppFormatting/PLACE_WHILE_ON_NEW_LINE/@EntryValue" value="false" type="bool" />
     <option name="/Default/CodeStyle/CodeFormatting/CppFormatting/PLACE_CATCH_ON_NEW_LINE/@EntryValue" value="false" type="bool" />
+    <option name="/Default/CodeStyle/CodeFormatting/CppFormatting/INDENT_CASE_FROM_SWITCH/@EntryValue" value="true" type="bool" />
   </component>
 </project>
