@@ -14,10 +14,8 @@
  * @param newSize Desired size of pointer
  * @return A pointer to the reallocated memory
  */
-void* reallocate(void* pointer, size_t oldSize, size_t newSize)
-{
-    if (newSize == 0)
-    {
+void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
+    if (newSize == 0) {
         free(pointer);
         return NULL;
     }

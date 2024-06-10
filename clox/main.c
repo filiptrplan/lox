@@ -4,8 +4,15 @@
 #include "debug.h"
 #include "vm.h"
 
-int main(void)
-{
+int main(int argc, const char* argv[]) {
+    if (argc == 1) {
+        repl();
+    }
+    else if (argc == 2) {
+        runFile(argv[1]);
+    }
+    else {
+    }
     initVM();
     Chunk chunk;
     initChunk(&chunk);
