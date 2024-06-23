@@ -68,6 +68,7 @@ static void skipWhitespace() {
         switch (c) {
             case ' ':
             case '\r':
+            case '\n':
             case '\t':
                 advance();
                 break;
@@ -195,6 +196,6 @@ Token scanToken() {
         case '>': return makeToken(match('=') ? TOKEN_GREATER_EQUAL : TOKEN_GREATER);
         case '"': return string();
     }
-
+    
     return errorToken("Unexpected character.");
 }
