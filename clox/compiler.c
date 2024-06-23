@@ -122,7 +122,7 @@ static void emitConstant(Value value) {
 static void endCompiler() {
     emitReturn();
 #ifdef DEBUG_PRINT_CODE
-    if(!parser.hadError) {
+    if (!parser.hadError) {
         dissasembleChunk(currentChunk(), "code");
     }
 #endif
