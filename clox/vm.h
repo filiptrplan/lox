@@ -11,6 +11,7 @@ typedef struct {
     Chunk* chunk;
     Value stack[STACK_MAX];
     Value* stackTop;
+    Obj* objects;
 } VM;
 
 typedef enum {
@@ -24,5 +25,7 @@ void freeVM();
 InterpretResult interpret(const char* source);
 void push(Value value);
 Value pop();
+
+extern VM vm;
 
 #endif //VM_H

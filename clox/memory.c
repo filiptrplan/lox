@@ -1,6 +1,8 @@
 #include <stdlib.h>
 
 #include "memory.h"
+#include "vm.h"
+#include "object.h"
 
 /**
  * This is the main function used by clox to manage memory. The rules are used when allocating:
@@ -23,4 +25,23 @@ void* reallocate(void* pointer, size_t oldSize, size_t newSize) {
     void* result = realloc(pointer, newSize);
     if (result == NULL) exit(1); // Alloctation failed
     return result;
+}
+
+static void freeObject(Obj* object) {
+    switch (object->type) {
+        case OBJ_STRING: 
+            ObjString* objString = (ObjString*)object;
+            FREE_ARRAY(char, objString->chars, objString->length + 1);
+            FREE(ObjString, objString);
+            break;
+    }
+}
+
+void freeObjects() {
+    Obj* object = vm.objects;
+    while (object != NULL) {
+        Obj* next = object->next;
+        freeObject(object);
+        object = next;
+    }
 }
