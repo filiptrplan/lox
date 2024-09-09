@@ -123,7 +123,7 @@ static InterpretResult run() {
             case OP_GET_GLOBAL: {
                 ObjString* name = READ_STRING();
                 Value value;
-                if(!tableGet(&vm.globals, name, &value)) {
+                if (!tableGet(&vm.globals, name, &value)) {
                     runtimeError("Undefined variable '%s'.", name->chars);
                     return INTERPRET_RUNTIME_ERROR;
                 }
@@ -148,13 +148,11 @@ static InterpretResult run() {
             case OP_ADD: {
                 if (IS_STRING(peek(0)) && IS_STRING(peek(1))) {
                     concatenate();
-                }
-                else if (IS_NUMBER(peek(0)) && IS_NUMBER(peek(1))) {
+                } else if (IS_NUMBER(peek(0)) && IS_NUMBER(peek(1))) {
                     double b = AS_NUMBER(pop());
                     double a = AS_NUMBER(pop());
                     push(NUMBER_VAL(a + b));
-                }
-                else {
+                } else {
                     runtimeError("Operands must be either two numbers or two strings.");
                     return INTERPRET_RUNTIME_ERROR;
                 }

@@ -54,11 +54,9 @@ static void errorAt(Token* token, const char* message) {
 
     if (token->type == TOKEN_EOF) {
         fprintf(stderr, " at end");
-    }
-    else if (token->type == TOKEN_ERROR) {
+    } else if (token->type == TOKEN_ERROR) {
         // Nothing.
-    }
-    else {
+    } else {
         fprintf(stderr, " at '%.*s'", token->length, token->start);
     }
 
@@ -371,6 +369,7 @@ static void synchronize() {
             case TOKEN_RETURN:
                 return;
             default: // nothing
+
         }
         advance();
     }
@@ -388,8 +387,7 @@ static void declaration() {
 static void statement() {
     if (match(TOKEN_PRINT)) {
         printStatement();
-    }
-    else {
+    } else {
         expressionStatement();
     }
 }
