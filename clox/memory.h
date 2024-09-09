@@ -15,8 +15,8 @@
 #define FREE(type, pointer) \
     reallocate(pointer, sizeof(type), 0)    
 
-#define ALLOCATE(type, size) \
-    (type*)reallocate(NULL, 0, size)
+#define ALLOCATE(type, count) \
+    (type*)reallocate(NULL, 0, sizeof(type) * count)
 
 #define ALLOCATE_OBJ(type, objectType) \
     (type*)allocateObject(sizeof(type), objectType)
