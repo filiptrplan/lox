@@ -1,1 +1,5 @@
-var breakfast = "beignets"; var beverage = "cafe au lait"; breakfast = "beignets with " + beverage;  print breakfast;
+{
+    var test = 1;
+    test = 2;
+    var test2 = test2;
+}
