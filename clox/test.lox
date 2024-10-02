@@ -1,5 +1,8 @@
-{
-    var test = 1;
-    test = 2;
-    var test2 = test2;
-}
+fun a() {
+b();
+ }
+fun b() {
+c();
+ }
+fun c() { c("too", "many"); }
+a();

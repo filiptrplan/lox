@@ -68,8 +68,11 @@ static void skipWhitespace() {
         switch (c) {
             case ' ':
             case '\r':
-            case '\n':
             case '\t':
+                advance();
+                break;
+            case '\n':
+                scanner.line++;
                 advance();
                 break;
             case '/':

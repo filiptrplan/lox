@@ -34,6 +34,11 @@ static void freeObject(Obj* object) {
             FREE_ARRAY(char, objString->chars, objString->length + 1);
             FREE(ObjString, objString);
             break;
+        case OBJ_FUNCTION:
+            ObjFunction* objFunction = (ObjFunction*)object;
+            freeChunk(&objFunction->chunk);
+            FREE(ObjFunction, objFunction);
+            break;
     }
 }
 
