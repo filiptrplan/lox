@@ -4,19 +4,25 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <time.h>
 
 #include "compiler.h"
 #include "debug.h"
 #include "memory.h"
+#include "value.h"
 
 VM vm;
+
+static Value clockNative(int argCount, Value* args) {
+    return NUMBER_VAL((double)clock() / CLOCKS_PER_SEC);
+}
 
 static void resetStack() {
     vm.stackTop = vm.stack;
     vm.frameCount = 0;
 }
 
-static void runtimeError(const char *format, ...) {
+static void runtimeError(const char* format, ...) {
     va_list args;
     va_start(args, format);
 
@@ -25,14 +31,13 @@ static void runtimeError(const char *format, ...) {
     fputs("\n", stderr);
 
     for (int i = vm.frameCount - 1; i >= 0; i--) {
-        CallFrame *frame = &vm.frames[i];
-        ObjFunction *function = frame->function;
+        CallFrame* frame = &vm.frames[i];
+        ObjFunction* function = frame->function;
 
         size_t instruction = frame->ip - function->chunk.code - 1;
         fprintf(stderr, "[line %d] in ", function->chunk.lines[instruction]);
 
-        if (function->name == NULL) { fprintf(stderr, "script\n"); }
-        else {
+        if (function->name == NULL) { fprintf(stderr, "script\n"); } else {
             fprintf(stderr, "%s()\n", function->name->chars);
         }
     }
@@ -40,11 +45,20 @@ static void runtimeError(const char *format, ...) {
     resetStack();
 }
 
+static void defineNative(const char* name, NativeFn function) {
+    push(OBJ_VAL(copyString(name, (int)strlen(name))));
+    push(OBJ_VAL(newNative(function)));
+    tableSet(&vm.globals, AS_STRING(vm.stack[0]), vm.stack[1]);
+    pop();
+    pop();
+}
+
 void initVM() {
     vm.objects = NULL;
     initTable(&vm.strings);
     initTable(&vm.globals);
     resetStack();
+    defineNative("clock", clockNative);
 }
 
 void freeVM() {
@@ -67,7 +81,7 @@ static Value peek(int distance) {
     return vm.stackTop[-1 - distance];
 }
 
-static bool call(ObjFunction *function, int argCount) {
+static bool call(ObjFunction* function, int argCount) {
     if (argCount != function->arity) {
         runtimeError("Expected %d arguments but got %d.", function->arity, argCount);
         return false;
@@ -78,7 +92,7 @@ static bool call(ObjFunction *function, int argCount) {
         return false;
     }
 
-    CallFrame *frame = &vm.frames[vm.frameCount++];
+    CallFrame* frame = &vm.frames[vm.frameCount++];
     frame->function = function;
     frame->ip = function->chunk.code;
     frame->slots = vm.stackTop - argCount - 1;
@@ -90,6 +104,12 @@ static bool callValue(Value callee, int argCount) {
         switch (OBJ_TYPE(callee)) {
             case OBJ_FUNCTION:
                 return call(AS_FUNCTION(callee), argCount);
+            case OBJ_NATIVE:
+                NativeFn native = AS_NATIVE(callee);
+                Value result = native(argCount, vm.stackTop - argCount);
+                vm.stackTop -= argCount + 1;
+                push(result);
+                return true;
             default:
                 break;
         }
@@ -103,11 +123,11 @@ static bool isFalsey(Value value) {
 }
 
 static void concatenate() {
-    ObjString *b = AS_STRING(pop());
-    ObjString *a = AS_STRING(pop());
+    ObjString* b = AS_STRING(pop());
+    ObjString* a = AS_STRING(pop());
 
     int length = a->length + b->length;
-    char *chars = ALLOCATE(char, length + 1);
+    char* chars = ALLOCATE(char, length + 1);
     memcpy(chars, a->chars, a->length);
     memcpy(chars + a->length, b->chars, b->length);
     chars[length] = '\0';
@@ -116,7 +136,7 @@ static void concatenate() {
 }
 
 static InterpretResult run() {
-    CallFrame *frame = &vm.frames[vm.frameCount - 1];
+    CallFrame* frame = &vm.frames[vm.frameCount - 1];
 #define READ_BYTE() (*frame->ip++)
 #define READ_CONSTANT() (frame->function->chunk.constants.values[READ_BYTE()])
 #define READ_STRING() AS_STRING(READ_CONSTANT())
@@ -135,13 +155,13 @@ static InterpretResult run() {
     for (;;) {
 #ifdef DEBUG_TRACE_EXECUTION
         printf(" ");
-        for (Value *slot = vm.stack; slot < vm.stackTop; slot++) {
+        for (Value* slot = vm.stack; slot < vm.stackTop; slot++) {
             printf("[ ");
             printValue(*slot);
             printf(" ]");
         }
         printf("\n");
-        disassembleInstruction(&frame->function->chunk, (int) (frame->ip - frame->function->chunk.code));
+        disassembleInstruction(&frame->function->chunk, (int)(frame->ip - frame->function->chunk.code));
 #endif
         uint8_t instruction;
         switch (instruction = READ_BYTE()) {
@@ -163,13 +183,13 @@ static InterpretResult run() {
                 pop();
                 break;
             case OP_DEFINE_GLOBAL: {
-                ObjString *name = READ_STRING();
+                ObjString* name = READ_STRING();
                 tableSet(&vm.globals, name, peek(0));
                 pop();
                 break;
             }
             case OP_GET_GLOBAL: {
-                ObjString *name = READ_STRING();
+                ObjString* name = READ_STRING();
                 Value value;
                 if (!tableGet(&vm.globals, name, &value)) {
                     runtimeError("Undefined variable '%s'.", name->chars);
@@ -179,7 +199,7 @@ static InterpretResult run() {
                 break;
             }
             case OP_SET_GLOBAL: {
-                ObjString *name = READ_STRING();
+                ObjString* name = READ_STRING();
                 if (tableSet(&vm.globals, name, peek(0))) {
                     tableDelete(&vm.globals, name);
                     runtimeError("Undefined variable '%s'.", name->chars);
@@ -294,8 +314,8 @@ static InterpretResult run() {
 #undef READ_SHORT
 }
 
-InterpretResult interpret(const char *source) {
-    ObjFunction *function = compile(source);
+InterpretResult interpret(const char* source) {
+    ObjFunction* function = compile(source);
     if (function == NULL) {
         return INTERPRET_COMPILE_ERROR;
     }
