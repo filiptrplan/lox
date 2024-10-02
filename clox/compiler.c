@@ -257,38 +257,38 @@ static void binary(bool canAssign) {
     ParseRule* rule = getRule(operatorType);
     parsePrecedence((Precedence)(rule->precedence + 1));
     switch (operatorType) {
-    case TOKEN_PLUS:
-        emitByte(OP_ADD);
-        break;
-    case TOKEN_MINUS:
-        emitByte(OP_SUBTRACT);
-        break;
-    case TOKEN_STAR:
-        emitByte(OP_MULTIPLY);
-        break;
-    case TOKEN_SLASH:
-        emitByte(OP_DIVIDE);
-        break;
-    case TOKEN_BANG_EQUAL:
-        emitBytes(OP_EQUAL, OP_NOT);
-        break;
-    case TOKEN_BANG:
-        emitByte(OP_EQUAL);
-        break;
-    case TOKEN_GREATER:
-        emitByte(OP_GREATER);
-        break;
-    case TOKEN_GREATER_EQUAL:
-        emitBytes(OP_LESS, OP_NOT);
-        break;
-    case TOKEN_LESS:
-        emitByte(OP_LESS);
-        break;
-    case TOKEN_LESS_EQUAL:
-        emitBytes(OP_GREATER, OP_NOT);
-        break;
-    default:
-        return; // Unreachable.
+        case TOKEN_PLUS:
+            emitByte(OP_ADD);
+            break;
+        case TOKEN_MINUS:
+            emitByte(OP_SUBTRACT);
+            break;
+        case TOKEN_STAR:
+            emitByte(OP_MULTIPLY);
+            break;
+        case TOKEN_SLASH:
+            emitByte(OP_DIVIDE);
+            break;
+        case TOKEN_BANG_EQUAL:
+            emitBytes(OP_EQUAL, OP_NOT);
+            break;
+        case TOKEN_BANG:
+            emitByte(OP_EQUAL);
+            break;
+        case TOKEN_GREATER:
+            emitByte(OP_GREATER);
+            break;
+        case TOKEN_GREATER_EQUAL:
+            emitBytes(OP_LESS, OP_NOT);
+            break;
+        case TOKEN_LESS:
+            emitByte(OP_LESS);
+            break;
+        case TOKEN_LESS_EQUAL:
+            emitBytes(OP_GREATER, OP_NOT);
+            break;
+        default:
+            return; // Unreachable.
     }
 }
 
@@ -315,11 +315,11 @@ static void or_(bool canAssign) {
 
 static void literal(bool canAssign) {
     switch (parser.previous.type) {
-    case TOKEN_FALSE:
-        emitByte(OP_FALSE);
-        break;
-    case TOKEN_TRUE:
-        emitByte(OP_TRUE);
+        case TOKEN_FALSE:
+            emitByte(OP_FALSE);
+            break;
+        case TOKEN_TRUE:
+            emitByte(OP_TRUE);
         break;
     case TOKEN_NIL:
         emitByte(OP_NIL);
@@ -373,14 +373,14 @@ static void unary(bool canAssign) {
     parsePrecedence(PREC_UNARY);
 
     switch (operatorType) {
-    case TOKEN_MINUS:
-        emitByte(OP_NEGATE);
-        break;
-    case TOKEN_BANG:
-        emitByte(OP_NOT);
-        break;
-    default:
-        return; // Unreachable.
+        case TOKEN_MINUS:
+            emitByte(OP_NEGATE);
+            break;
+        case TOKEN_BANG:
+            emitByte(OP_NOT);
+            break;
+        default:
+            return; // Unreachable.
     }
 }
 
@@ -693,10 +693,10 @@ static void synchronize() {
     while (parser.current.type != TOKEN_EOF) {
         if (parser.previous.type == TOKEN_SEMICOLON) return;
         switch (parser.current.type) {
-        case TOKEN_CLASS:
-        case TOKEN_FUN:
-        case TOKEN_VAR:
-        case TOKEN_FOR:
+            case TOKEN_CLASS:
+            case TOKEN_FUN:
+            case TOKEN_VAR:
+            case TOKEN_FOR:
         case TOKEN_IF:
         case TOKEN_WHILE:
         case TOKEN_PRINT:
