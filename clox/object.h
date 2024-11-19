@@ -17,11 +17,14 @@
 #define AS_FUNCTION(value) ((ObjFunction*)AS_OBJ(value))
 #define IS_NATIVE(value) isObjType(value, OBJ_NATIVE)
 #define AS_NATIVE(value) (((ObjNative*)AS_OBJ(value))->function)
+#define IS_CLOSURE(value) isObjType(value, OBJ_CLOSURE)
+#define AS_CLOSURE(value) ((ObjClosure*)AS_OBJ(value))
 
 typedef enum {
     OBJ_STRING,
     OBJ_FUNCTION,
-    OBJ_NATIVE
+    OBJ_NATIVE,
+    OBJ_CLOSURE
 } ObjType;
 
 struct Obj {
@@ -43,12 +46,18 @@ typedef struct {
     ObjString* name;
 } ObjFunction;
 
+typedef struct {
+    Obj obj;
+    ObjFunction* function;
+} ObjClosure;
+
 typedef Value (*NativeFn)(int argCount, Value* args);
 typedef struct {
     Obj obj;
     NativeFn function;
 } ObjNative;
 
+ObjClosure* newClosure(ObjFunction* function);
 ObjFunction* newFunction();
 ObjNative* newNative(NativeFn function);
 ObjString* copyString(const char* chars, int length);
